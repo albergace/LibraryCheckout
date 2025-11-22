@@ -38,37 +38,66 @@ string Item::getName() const { return name; }
 // Default textual representation for a generic Item. Derived
 // classes override this to include additional properties.
 void Item::print(ostream &os) const {
-    os << "Item[id=" << id << ", name='" << name << "', desc='" << description << "']";
+    os << "Item[id=" << id
+       << ", name=\"" << name << "\""
+       << ", desc=\"" << description << "\"]";
 }
 
 // Book implementation: forward constructor arguments into the base
 // and move the title/author/copyrightDate for efficiency.
-Book::Book(string name_, string description_, int id_, string title_, string author_, string copyrightDate_)
-    : Item(move(name_), move(description_), id_), title(move(title_)), author(move(author_)), copyrightDate(move(copyrightDate_)) {}
+Book::Book(string name_, string description_, int id_,
+           string title_, string author_, string copyrightDate_)
+    : Item(move(name_), move(description_), id_),
+      title(move(title_)),
+      author(move(author_)),
+      copyrightDate(move(copyrightDate_))
+{}
 
 void Book::print(ostream &os) const {
-    os << "Book[id=" << id << ", name='" << name << "', title='" << title << "', author='" << author << "', copyright='" << copyrightDate << "', desc='" << description << "']";
+    os << "Book[id=" << id
+       << ", name=\"" << name << "\""
+       << ", title=\"" << title << "\""
+       << ", author=\"" << author << "\""
+       << ", copyright=\"" << copyrightDate << "\""
+       << ", desc=\"" << description << "\"]";
 }
 
 // Movie: move actor list and other fields into the member variables.
-Movie::Movie(string name_, string description_, int id_, string title_, string director_, vector<string> actors)
-    : Item(move(name_), move(description_), id_), title(move(title_)), director(move(director_)), mainActors(move(actors)) {}
+Movie::Movie(string name_, string description_, int id_,
+             string title_, string director_, vector<string> actors)
+    : Item(move(name_), move(description_), id_),
+      title(move(title_)),
+      director(move(director_)),
+      mainActors(move(actors))
+{}
 
 void Movie::print(ostream &os) const {
-    os << "Movie[id=" << id << ", name='" << name << "', title='" << title << "', director='" << director << "', actors=[";
+    os << "Movie[id=" << id
+       << ", name=\"" << name << "\""
+       << ", title=\"" << title << "\""
+       << ", director=\"" << director << "\""
+       << ", actors=[";
     for (size_t i = 0; i < mainActors.size(); ++i) {
         if (i) os << ", ";
         os << mainActors[i];
     }
-    os << "], desc='" << description << "']";
+    os << "], desc=\"" << description << "\"]";
 }
 
 // Magazine: simple constructor and print implementation.
-Magazine::Magazine(string name_, string description_, int id_, string edition_, string mainArticleTitle_)
-    : Item(move(name_), move(description_), id_), edition(move(edition_)), mainArticleTitle(move(mainArticleTitle_)) {}
+Magazine::Magazine(string name_, string description_, int id_,
+                   string edition_, string mainArticleTitle_)
+    : Item(move(name_), move(description_), id_),
+      edition(move(edition_)),
+      mainArticleTitle(move(mainArticleTitle_))
+{}
 
 void Magazine::print(ostream &os) const {
-    os << "Magazine[id=" << id << ", name='" << name << "', edition='" << edition << "', mainArticle='" << mainArticleTitle << "', desc='" << description << "']";
+    os << "Magazine[id=" << id
+       << ", name=\"" << name << "\""
+       << ", edition=\"" << edition << "\""
+       << ", mainArticle=\"" << mainArticleTitle << "\""
+       << ", desc=\"" << description << "\"]";
 }
 
 // Polymorphic stream operator forwards to the virtual print method.

@@ -8,9 +8,9 @@ using namespace std;
  * File: LibraryStorage.cpp
  * ------------------------
  * Implements the storage model declared in LibraryStorage.h. A Compartment
- * owns an Item pointer and contains optional checkout metadata (person/due).
- * LibraryStorage provides operations to add, checkout, checkin, swap, and
- * print items. All operations validate indices and report clear errors.
+ * owns an Item pointer. LibraryStorage provides operations to add, checkout,
+ * checkin, swap, and print items. All operations validate indices and report
+ * clear errors.
  */
 
 // ------------------ Compartment implementation ------------------
@@ -21,28 +21,13 @@ bool Compartment::isEmpty() const { return ptr == nullptr; }
 const Item* Compartment::get() const { return ptr.get(); }
 Item* Compartment::get() { return ptr.get(); }
 
-void Compartment::place(unique_ptr<Item> item) { ptr = move(item); }
+void Compartment::place(unique_ptr<Item> item) {
+    ptr = move(item);
+}
 
 std::unique_ptr<Item> Compartment::remove() {
-    // When removing the item, clear checkout metadata and return ownership.
-    clearCheckoutInfo();
     return move(ptr);
 }
-
-void Compartment::setCheckoutInfo(const std::string &person, const std::string &due) {
-    checkedOutBy = person;
-    dueDate = due;
-}
-
-void Compartment::clearCheckoutInfo() {
-    checkedOutBy.clear();
-    dueDate.clear();
-}
-
-bool Compartment::isCheckedOut() const { return !checkedOutBy.empty(); }
-
-std::string Compartment::getCheckedOutBy() const { return checkedOutBy; }
-std::string Compartment::getDueDate() const { return dueDate; }
 
 // ------------------ Shelf implementation ------------------
 Shelf::Shelf() = default;
@@ -81,7 +66,6 @@ bool LibraryStorage::addItem(unique_ptr<Item> item, size_t shelfIdx, size_t comp
             return false;
         }
         c.place(move(item));
-        c.clearCheckoutInfo();
         return true;
     } catch (const out_of_range &e) {
         cerr << "Error: " << e.what() << "\n";
@@ -126,7 +110,6 @@ bool LibraryStorage::checkinItem(size_t shelfIdx, size_t compIdx) {
             return false;
         }
         c.place(move(it->item));
-        c.clearCheckoutInfo();
         checkedOut.erase(it);
         return true;
     } catch (const out_of_range &e) {
@@ -135,23 +118,64 @@ bool LibraryStorage::checkinItem(size_t shelfIdx, size_t compIdx) {
     }
 }
 
+bool LibraryStorage::removeItem(size_t shelfIdx, size_t compIdx) {
+    if (shelfIdx >= shelves.size()) {
+        cerr << "Error: Shelf " << shelfIdx << " does not exist.\n";
+        return false;
+    }
+
+    try {
+        Compartment &c = shelves[shelfIdx][compIdx];
+        if (c.isEmpty()) {
+            cerr << "Error: Cannot remove from empty compartment ("
+                 << shelfIdx << ", " << compIdx << ").\n";
+            return false;
+        }
+
+        // Take ownership, then discard it when unique_ptr goes out of scope.
+        std::unique_ptr<Item> discarded = c.remove();
+        // 'discarded' goes out of scope here and deletes the Item.
+        return true;
+    } catch (const out_of_range &e) {
+        cerr << "Error: " << e.what() << "\n";
+        return false;
+    }
+}
+
 void LibraryStorage::printItemsInStorage() const {
-    cout << "Items in storage:\n";
+    cout << "Items currently in storage:\n";
+    bool any = false;
+
     for (size_t s = 0; s < shelves.size(); ++s) {
         for (size_t c = 0; c < shelves[s].capacity(); ++c) {
             const Compartment &comp = shelves[s][c];
             if (!comp.isEmpty()) {
-                cout << " Shelf " << s << " Compartment " << c << " -> " << *comp.get() << "\n";
+                any = true;
+                cout << "  Shelf " << s << ", Compartment " << c << ": "
+                     << *comp.get() << "\n";
             }
         }
+    }
+
+    if (!any) {
+        cout << "  (none)\n";
     }
 }
 
 void LibraryStorage::printCheckedOutItems() const {
-    cout << "Checked-out items:\n";
-    if (checkedOut.empty()) cout << " (none)\n";
+    cout << "Items currently checked out:\n";
+
+    if (checkedOut.empty()) {
+        cout << "  (none)\n";
+        return;
+    }
+
     for (const auto &rec : checkedOut) {
-        cout << " From (" << rec.origShelf << ", " << rec.origComp << ") -> " << *rec.item << " | Person: " << rec.person << " | Due: " << rec.dueDate << "\n";
+        cout << "  From shelf " << rec.origShelf
+             << ", compartment " << rec.origComp << ": "
+             << *rec.item << "\n"
+             << "    Checked out by: " << rec.person
+             << " (due: " << rec.dueDate << ")\n";
     }
 }
 
