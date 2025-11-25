@@ -31,7 +31,6 @@ vector<string> splitActors(const string &line) {
         }
     }
 
-    // last token
     string t = trim(current);
     if (!t.empty()) {
         result.push_back(t);
@@ -70,7 +69,6 @@ string readLine(const string &prompt) {
 }
 
 size_t getMaxCompartment(const LibraryStorage &lib) {
-    // Assume at least one shelf; your LibraryStorage(3) guarantees this
     return lib[0].capacity();
 }
 
@@ -113,7 +111,8 @@ void addItemMenu(LibraryStorage &lib) {
         // Movie
         string title = readLine("Movie title: ");
         string director = readLine("Director: ");
-        string actorsLine = readLine("Main actors (comma-separated, e.g. \"Actor A, Actor B\"): ");
+        string actorsLine = readLine("Main actors (comma-separated,"
+                                     " e.g. \"Actor A, Actor B\"): ");
 
         vector<string> actors = splitActors(actorsLine);
         if (actors.empty()) {
@@ -243,13 +242,13 @@ void showCheckedOut(const LibraryStorage &lib) {
     lib.printCheckedOutItems();
 }
 
-// ===== Your original scripted demo moved into a function =====
+// ===== original scripted demo moved into a function =====
 
 void runDemo() {
     cout << "\n=== Running scripted demo ===\n\n";
     cout << "Library Inventory System demo\n\n";
 
-    LibraryStorage lib(3); // 3 shelves, each with 15 compartments
+    LibraryStorage lib(3);
 
     // Add some items
     cout << "Adding items...\n";
@@ -264,7 +263,6 @@ void runDemo() {
                                       "Vol 10", "The Future of AI"),
                 1, 14);
 
-    // Demonstrate [] access: print the item at shelf 2 compartment 4
     try {
         cout << "Accessing via operator[]: libraryInventory[2][4] -> ";
         const Compartment &comp = lib[2][4];
@@ -278,11 +276,9 @@ void runDemo() {
     lib.printItemsInStorage();
     cout << "\n";
 
-    // Checkout item
     cout << "Checking out item at (2,4) by Alice, due 2025-12-01...\n";
     lib.checkoutItem(2, 4, "Alice", "2025-12-01");
 
-    // Attempt checkout from empty slot
     cout << "Attempting to checkout empty slot (0,1)...\n";
     lib.checkoutItem(0, 1, "Bob", "2025-11-30");
 
@@ -292,12 +288,10 @@ void runDemo() {
     lib.printCheckedOutItems();
     cout << "\n";
 
-    // Swap two occupied compartments (0,0) and (1,14)
     cout << "Swapping items at (0,0) and (1,14)...\n";
     if (lib.swapItems(0,0,1,14)) cout << "Swap succeeded.\n";
     else cout << "Swap failed.\n";
 
-    // Attempt swap where one compartment is empty
     cout << "Attempting swap where one is empty: (0,0) and (0,1)...\n";
     if (lib.swapItems(0,0,0,1)) cout << "Swap succeeded.\n";
     else cout << "Swap failed as expected.\n";
@@ -308,7 +302,6 @@ void runDemo() {
     lib.printCheckedOutItems();
     cout << "\n";
 
-    // Checkin the item back to (2,4)
     cout << "Checking in item back to (2,4)...\n";
     if (lib.checkinItem(2,4)) cout << "Checkin succeeded.\n";
     else cout << "Checkin failed.\n";
@@ -318,17 +311,18 @@ void runDemo() {
     cout << "\nFinal checked-out list:\n";
     lib.printCheckedOutItems();
 
-    // Demonstrate error: try to checkin at a location that isn't checked out
-    cout << "\nDemonstrating error: attempt to checkin at (0,1) which isn't checked out...\n";
-    if (!lib.checkinItem(0,1)) cout << "Expected failure when checking in non-checked-out item.\n";
+    cout << "\nDemonstrating error: attempt to checkin at (0,1) which isn't checked"
+            " out...\n";
+    if (!lib.checkinItem(0,1)) cout << "Expected failure when checking in non-checked-out"
+                                       " item.\n";
 
     cout << "\nDemo complete.\n\n";
 }
 
-// ===== Main with interactive menu =====
+// ===== Main menu =====
 
 int main() {
-    LibraryStorage lib(3); // 3 shelves, each with 15 compartments
+    LibraryStorage lib(3);
 
     bool running = true;
     while (running) {

@@ -9,11 +9,10 @@ using namespace std;
  * ------------------------
  * Implements the storage model declared in LibraryStorage.h. A Compartment
  * owns an Item pointer. LibraryStorage provides operations to add, checkout,
- * checkin, swap, and print items. All operations validate indices and report
- * clear errors.
+ * checkin, swap, and print items. All operations validate input and report errors.
  */
 
-// ------------------ Compartment implementation ------------------
+// ------------------ Compartment ------------------
 Compartment::Compartment() = default;
 
 bool Compartment::isEmpty() const { return ptr == nullptr; }
@@ -29,7 +28,7 @@ std::unique_ptr<Item> Compartment::remove() {
     return move(ptr);
 }
 
-// ------------------ Shelf implementation ------------------
+// ------------------ Shelf  ------------------
 Shelf::Shelf() = default;
 size_t Shelf::capacity() const { return CAP; }
 Compartment& Shelf::operator[](size_t idx) {
@@ -41,7 +40,7 @@ const Compartment& Shelf::operator[](size_t idx) const {
     return comps[idx];
 }
 
-// ------------------ LibraryStorage implementation ------------------
+// ------------------ LibraryStorage ------------------
 LibraryStorage::LibraryStorage(size_t numShelves) : shelves(numShelves) {}
 size_t LibraryStorage::numShelves() const { return shelves.size(); }
 
@@ -62,7 +61,8 @@ bool LibraryStorage::addItem(unique_ptr<Item> item, size_t shelfIdx, size_t comp
     try {
         Compartment &c = shelves[shelfIdx][compIdx];
         if (!c.isEmpty()) {
-            cerr << "Error: Compartment " << compIdx << " on shelf " << shelfIdx << " is already occupied.\n";
+            cerr << "Error: Compartment " << compIdx << " on shelf " << shelfIdx
+                 << " is already occupied.\n";
             return false;
         }
         c.place(move(item));
@@ -73,7 +73,8 @@ bool LibraryStorage::addItem(unique_ptr<Item> item, size_t shelfIdx, size_t comp
     }
 }
 
-bool LibraryStorage::checkoutItem(size_t shelfIdx, size_t compIdx, string person, string dueDate) {
+bool LibraryStorage::checkoutItem(size_t shelfIdx, size_t compIdx, string person,
+                                  string dueDate) {
     if (shelfIdx >= shelves.size()) {
         cerr << "Error: Shelf " << shelfIdx << " does not exist.\n";
         return false;
@@ -81,10 +82,10 @@ bool LibraryStorage::checkoutItem(size_t shelfIdx, size_t compIdx, string person
     try {
         Compartment &c = shelves[shelfIdx][compIdx];
         if (c.isEmpty()) {
-            cerr << "Error: Cannot checkout from empty compartment (" << shelfIdx << ", " << compIdx << ").\n";
+            cerr << "Error: Cannot checkout from empty compartment (" << shelfIdx << ", "
+                 << compIdx << ").\n";
             return false;
         }
-        // Move ownership of the item into our checkedOut vector
         unique_ptr<Item> it = c.remove();
         CheckedOutRecord rec{move(it), shelfIdx, compIdx, move(person), move(dueDate)};
         checkedOut.push_back(move(rec));
@@ -96,17 +97,20 @@ bool LibraryStorage::checkoutItem(size_t shelfIdx, size_t compIdx, string person
 }
 
 bool LibraryStorage::checkinItem(size_t shelfIdx, size_t compIdx) {
-    auto it = find_if(checkedOut.begin(), checkedOut.end(), [&](const CheckedOutRecord &r){
+    auto it = find_if(checkedOut.begin(), checkedOut.end(),
+                      [&](const CheckedOutRecord &r){
         return r.origShelf == shelfIdx && r.origComp == compIdx;
     });
     if (it == checkedOut.end()) {
-        cerr << "Error: No checked-out item recorded for location (" << shelfIdx << ", " << compIdx << ").\n";
+        cerr << "Error: No checked-out item recorded for location (" << shelfIdx << ", "
+             << compIdx << ").\n";
         return false;
     }
     try {
         Compartment &c = shelves[shelfIdx][compIdx];
         if (!c.isEmpty()) {
-            cerr << "Error: Cannot check in; compartment (" << shelfIdx << ", " << compIdx << ") is already occupied.\n";
+            cerr << "Error: Cannot check in; compartment (" << shelfIdx << ", " << compIdx
+                 << ") is already occupied.\n";
             return false;
         }
         c.place(move(it->item));
@@ -132,9 +136,7 @@ bool LibraryStorage::removeItem(size_t shelfIdx, size_t compIdx) {
             return false;
         }
 
-        // Take ownership, then discard it when unique_ptr goes out of scope.
         std::unique_ptr<Item> discarded = c.remove();
-        // 'discarded' goes out of scope here and deletes the Item.
         return true;
     } catch (const out_of_range &e) {
         cerr << "Error: " << e.what() << "\n";
